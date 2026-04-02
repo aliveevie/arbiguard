@@ -1,0 +1,42 @@
+{
+  "id": "gmx_oracle_manipulation_2022",
+  "name": "GMX Oracle Price Manipulation",
+  "txHash": "0x0000000000000000000000000000000000000000000000000000000000000001",
+  "date": "2022-09-18",
+  "chain": "arbitrum_one",
+  "expectedThreatType": "price_manipulation",
+  "expectedScore": 72,
+  "mockTrace": {
+    "traceCalldata": ["0x5cffe9de000000000000000000000000", "0x38ed1739"],
+    "traceDepths": [0, 1, 2, 3, 4],
+    "traceTargets": ["0xGMXRouter", "0xFlashLender", "0xOracleContract", "0xGMXVault", "0xGMXRouter"]
+  },
+  "mockEvents": [
+    {
+      "event": "Swap",
+      "args": { "amountIn": "50000000000000000000000", "amountOut": "2410000000" }
+    },
+    {
+      "event": "OracleUpdate",
+      "args": { "price": "2410000000", "timestamp": 1663516800 }
+    }
+  ],
+  "mockPriceData": {
+    "spotPrice": 2.41,
+    "twapPrice": 1.87,
+    "blockNumber": 25000000,
+    "windowBlocks": 30
+  },
+  "mockSandwichData": {
+    "txIndex": 5,
+    "blockTxs": [],
+    "targetPool": "0xGMXVault"
+  },
+  "mockLiquidationData": {
+    "hasLiquidationEvent": false,
+    "hasOracleUpdateSameBlock": true,
+    "liquidationBlock": 25000000,
+    "oracleUpdateBlock": 25000000,
+    "liquidationAmount": "0"
+  }
+}

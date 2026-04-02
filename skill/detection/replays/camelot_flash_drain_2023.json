@@ -1,0 +1,42 @@
+{
+  "id": "camelot_flash_drain_2023",
+  "name": "Camelot Flash Loan Pool Drain",
+  "txHash": "0x0000000000000000000000000000000000000000000000000000000000000002",
+  "date": "2023-03-10",
+  "chain": "arbitrum_one",
+  "expectedThreatType": "flash_loan_abuse",
+  "expectedScore": 68,
+  "mockTrace": {
+    "traceCalldata": ["0x5cffe9de000000000000000000000000", "0x022c0d9f", "0x5cffe9de"],
+    "traceDepths": [0, 1, 2, 3, 2, 1],
+    "traceTargets": ["0xCamelotRouter", "0xFlashLender", "0xCamelotPair", "0xCamelotPair", "0xFlashLender", "0xCamelotRouter"]
+  },
+  "mockEvents": [
+    {
+      "event": "FlashLoan",
+      "args": { "amount": "10000000000000000000000", "token": "0xWETH" }
+    },
+    {
+      "event": "Swap",
+      "args": { "amountIn": "10000000000000000000000", "amountOut": "15000000000" }
+    }
+  ],
+  "mockPriceData": {
+    "spotPrice": 1.52,
+    "twapPrice": 1.48,
+    "blockNumber": 70000000,
+    "windowBlocks": 30
+  },
+  "mockSandwichData": {
+    "txIndex": 3,
+    "blockTxs": [],
+    "targetPool": "0xCamelotPair"
+  },
+  "mockLiquidationData": {
+    "hasLiquidationEvent": false,
+    "hasOracleUpdateSameBlock": false,
+    "liquidationBlock": 70000000,
+    "oracleUpdateBlock": 0,
+    "liquidationAmount": "0"
+  }
+}

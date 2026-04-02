@@ -1,0 +1,42 @@
+{
+  "id": "radiant_flashloan_2024",
+  "name": "Radiant Capital Flash Loan Exploit",
+  "txHash": "0x0000000000000000000000000000000000000000000000000000000000000003",
+  "date": "2024-01-02",
+  "chain": "arbitrum_one",
+  "expectedThreatType": "flash_loan_abuse",
+  "expectedScore": 75,
+  "mockTrace": {
+    "traceCalldata": ["0x5cffe9de000000000000000000000000", "0xab9c4b5d", "0x38ed1739"],
+    "traceDepths": [0, 1, 2, 3, 4, 3, 2, 1],
+    "traceTargets": ["0xRadiantRouter", "0xAAVEFlash", "0xRadiantLending", "0xRadiantLending", "0xOracleContract", "0xRadiantLending", "0xAAVEFlash", "0xRadiantRouter"]
+  },
+  "mockEvents": [
+    {
+      "event": "FlashLoan",
+      "args": { "amount": "50000000000000000000000", "token": "0xUSDC" }
+    },
+    {
+      "event": "Borrow",
+      "args": { "amount": "30000000000000000000000", "user": "0xAttacker" }
+    }
+  ],
+  "mockPriceData": {
+    "spotPrice": 1.15,
+    "twapPrice": 0.98,
+    "blockNumber": 170000000,
+    "windowBlocks": 30
+  },
+  "mockSandwichData": {
+    "txIndex": 2,
+    "blockTxs": [],
+    "targetPool": "0xRadiantLending"
+  },
+  "mockLiquidationData": {
+    "hasLiquidationEvent": true,
+    "hasOracleUpdateSameBlock": true,
+    "liquidationBlock": 170000000,
+    "oracleUpdateBlock": 170000000,
+    "liquidationAmount": "25000000000000000000000"
+  }
+}
