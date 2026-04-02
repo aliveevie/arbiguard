@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: arbiguard
+    runtime: node
+    plan: free
+    buildCommand: pnpm install && pnpm run build
+    startCommand: node dist/server/index.js
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: ARBITRUM_SEPOLIA_RPC_URL
+        sync: false
+      - key: ARBITRUM_ONE_RPC_URL
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        value: gpt-4o-mini
+      - key: PORT
+        value: 3000
