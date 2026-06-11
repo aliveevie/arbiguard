@@ -53,9 +53,14 @@ ArbiGuard is the firewall layer those venues are missing. It scores every suspic
 | Arbitrum Sepolia | 421614 | ReputationRegistry | [`0x62b5bd6bce8c8df71b02432a3ad486a35719274d`](https://arbitrum-sepolia.blockscout.com/address/0x62b5bd6bce8c8df71b02432a3ad486a35719274d) |
 | Arbitrum Sepolia | 421614 | ThreatSignatureRegistry | [`0x1b0216bc1c5e57db9b2721ddacda107759b745aa`](https://arbitrum-sepolia.blockscout.com/address/0x1b0216bc1c5e57db9b2721ddacda107759b745aa) |
 | Arbitrum Sepolia | 421614 | RiskEngineSolidity (reference) | [`0x574388991f8a3e32f98789433541d5e3a6b39c21`](https://arbitrum-sepolia.blockscout.com/address/0x574388991f8a3e32f98789433541d5e3a6b39c21) |
-| Robinhood Chain Testnet | 46630 | ArbiGuardFirewall + registries | _deploying — see `deployments/46630.json`_ |
+| Robinhood Chain Testnet | 46630 | RiskEngine (Stylus, Rust/WASM) | [`0x4177bf2196151a05a51f7928988afd3fe7b6e949`](https://explorer.testnet.chain.robinhood.com/address/0x4177bf2196151a05a51f7928988afd3fe7b6e949) |
+| Robinhood Chain Testnet | 46630 | ArbiGuardFirewall | [`0x4ad001282938b6b8cfb8850f69d80c8d9bbbeb75`](https://explorer.testnet.chain.robinhood.com/address/0x4ad001282938b6b8cfb8850f69d80c8d9bbbeb75) |
+| Robinhood Chain Testnet | 46630 | RiskPolicyRegistry | [`0xee702c8f5b1c13492f9ada978e9649fcf4771f75`](https://explorer.testnet.chain.robinhood.com/address/0xee702c8f5b1c13492f9ada978e9649fcf4771f75) |
+| Robinhood Chain Testnet | 46630 | ReputationRegistry | [`0x0b12480cb5db1f6605fe4ed206a0f6c29f86f85e`](https://explorer.testnet.chain.robinhood.com/address/0x0b12480cb5db1f6605fe4ed206a0f6c29f86f85e) |
+| Robinhood Chain Testnet | 46630 | ThreatSignatureRegistry | [`0x07f821d0938ac1eb5b533d1ee735eddfabf36110`](https://explorer.testnet.chain.robinhood.com/address/0x07f821d0938ac1eb5b533d1ee735eddfabf36110) |
+| Robinhood Chain Testnet | 46630 | RiskEngineSolidity (reference) | [`0x46e841b73c67d7e90bc629c3d4922c10661f8d6a`](https://explorer.testnet.chain.robinhood.com/address/0x46e841b73c67d7e90bc629c3d4922c10661f8d6a) |
 
-Solidity contracts are source-verified on Arbitrum Sepolia Blockscout. The Stylus engine is the activated WASM contract (deploy tx [`0xac7961…fd22c`](https://sepolia.arbiscan.io/tx/0xac7961d13b06e0d1cf48b038105a439cddffe2fe07d5478b9065457c476fd22c)); its on-chain `score()` reproduces the off-chain scorer exactly (73 / 63 / 30 on the three replays).
+Solidity contracts are source-verified on both Blockscout explorers. The Stylus engines are activated WASM contracts (Rust, `contracts-stylus/`) whose on-chain `score()` reproduces the off-chain scorer exactly — 73 / 63 / 30 on the three replays, on both chains. The full exploit-replay demo (`pnpm demo:firewall`) has tripped the breaker live on each network.
 
 Live agent UI: **https://arbiguard-latest.onrender.com/** · Status: https://arbiguard-latest.onrender.com/api/status
 
