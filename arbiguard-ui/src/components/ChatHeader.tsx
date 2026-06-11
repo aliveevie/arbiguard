@@ -1,4 +1,5 @@
-import { Shield } from "lucide-react";
+import { Shield, Activity } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const ChatHeader = () => {
   return (
@@ -9,17 +10,22 @@ const ChatHeader = () => {
         </div>
         <div>
           <h1 className="text-base font-semibold tracking-tight text-foreground">ArbiGuard</h1>
-          <span className="text-[11px] text-muted-foreground">DeFi Threat Detection Agent on Arbitrum</span>
+          <span className="text-[11px] text-muted-foreground">
+            On-chain firewall for tokenized assets · Arbitrum + Robinhood Chain
+          </span>
         </div>
       </div>
 
-      <div className="flex items-center gap-4">
-        <div className="flex items-center gap-1.5 text-xs text-success bg-success/10 px-2.5 py-1 rounded-full border border-success/20">
-          <span className="w-1.5 h-1.5 bg-success rounded-full animate-pulse-dot" />
-          Agent #156
-        </div>
+      <div className="flex items-center gap-3">
+        <Link
+          to="/firewall"
+          className="flex items-center gap-1.5 text-xs text-primary-foreground bg-primary px-3 py-1.5 rounded-full hover:opacity-90 transition-opacity"
+        >
+          <Activity className="w-3.5 h-3.5" />
+          Live Firewall
+        </Link>
         <span className="hidden sm:inline-flex text-[11px] text-info bg-info/10 px-2.5 py-1 rounded-full border border-info/20">
-          Arbitrum Sepolia
+          Arbitrum Sepolia + Robinhood
         </span>
       </div>
     </header>

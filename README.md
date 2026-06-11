@@ -62,7 +62,7 @@ ArbiGuard is the firewall layer those venues are missing. It scores every suspic
 
 Solidity contracts are source-verified on both Blockscout explorers. The Stylus engines are activated WASM contracts (Rust, `contracts-stylus/`) whose on-chain `score()` reproduces the off-chain scorer exactly — 73 / 63 / 30 on the three replays, on both chains. The full exploit-replay demo (`pnpm demo:firewall`) has tripped the breaker live on each network.
 
-Live agent UI: **https://arbiguard-latest.onrender.com/** · Status: https://arbiguard-latest.onrender.com/api/status
+Live agent UI: **https://arbiguard-latest.onrender.com/** · **Live firewall dashboard: https://arbiguard-latest.onrender.com/firewall** (reads breaker state, scorer parity, and the threat registry from both chains every 15s) · Status: https://arbiguard-latest.onrender.com/api/status
 
 ## Threat model
 
