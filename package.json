@@ -15,7 +15,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "skill:register": "tsx skill/actions/registerAgent.ts",
-    "demo": "tsx demo/agent.ts"
+    "demo": "tsx demo/agent.ts",
+    "demo:firewall": "tsx demo/firewall-demo.ts",
+    "gen:parity": "tsx scripts/gen-parity-cases.ts"
   },
   "dependencies": {
     "dotenv": "^17.4.0",
