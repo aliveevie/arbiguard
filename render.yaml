@@ -7,11 +7,13 @@ services:
     startCommand: node dist/server/index.js
     envVars:
       - key: NODE_VERSION
-        value: 20
+        value: 22
       - key: ARBITRUM_SEPOLIA_RPC_URL
         sync: false
       - key: ARBITRUM_ONE_RPC_URL
         sync: false
+      - key: ROBINHOOD_TESTNET_RPC_URL
+        value: https://rpc.testnet.chain.robinhood.com
       - key: OPENAI_API_KEY
         sync: false
       - key: OPENAI_MODEL

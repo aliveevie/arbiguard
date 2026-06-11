@@ -1,9 +1,12 @@
-node_modules
+**/node_modules
 dist
 contracts/out
 contracts/cache
 contracts/broadcast
 contracts/lib
+contracts-stylus/target
 .git
 .env
+.env.*
 coverage
+public

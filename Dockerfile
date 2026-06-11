@@ -1,4 +1,4 @@
-FROM node:20-slim AS builder
+FROM node:22-slim AS builder
 
 WORKDIR /app
 
@@ -18,7 +18,7 @@ RUN pnpm build
 WORKDIR /app
 RUN pnpm run build:server
 
-FROM node:20-slim
+FROM node:22-slim
 
 WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
@@ -28,6 +28,8 @@ COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/public ./public
 COPY skill/detection/replays/*.json ./skill/detection/replays/
 COPY skill/contracts/abi/ ./skill/contracts/abi/
+# deployed contract addresses read by /api/firewall (live dashboard)
+COPY deployments/ ./deployments/
 
 ENV PORT=3000
 EXPOSE 3000

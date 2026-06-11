@@ -5,6 +5,7 @@
   "author": "IBX Lab",
   "license": "MIT",
   "type": "module",
+  "packageManager": "pnpm@10.28.0",
   "main": "dist/skill/index.js",
   "scripts": {
     "build": "pnpm run build:ui && pnpm run build:server",
