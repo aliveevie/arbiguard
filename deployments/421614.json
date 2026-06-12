@@ -1,0 +1,12 @@
+{
+  "chainId": 421614,
+  "reputationRegistry": "0x62b5bd6bce8c8df71b02432a3ad486a35719274d",
+  "riskPolicyRegistry": "0x9171968d47e382a7387082512156502988b4b414",
+  "threatSignatureRegistry": "0x1b0216bc1c5e57db9b2721ddacda107759b745aa",
+  "riskEngineSolidity": "0x574388991f8a3e32f98789433541d5e3a6b39c21",
+  "riskEngine": "0x47f6e2dbb2dd913baef535b7aa744ee16d337e99",
+  "firewall": "0xad5230b558b8083f4b313f77c83d2765a78645b6",
+  "agent": "0xcDBd2FbFc371649D11AaEee0C53b6624Ab3cdD33",
+  "poolA": "0x4e76b58c7f0eeee990b487cb1cc530d53d5acbe8",
+  "poolB": "0x92119bce189c6cdd5088081a1d1f04e789de1a7c"
+}

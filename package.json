@@ -5,6 +5,7 @@
   "author": "IBX Lab",
   "license": "MIT",
   "type": "module",
+  "packageManager": "pnpm@10.28.0",
   "main": "dist/skill/index.js",
   "scripts": {
     "build": "pnpm run build:ui && pnpm run build:server",
@@ -15,7 +16,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "skill:register": "tsx skill/actions/registerAgent.ts",
-    "demo": "tsx demo/agent.ts"
+    "demo": "tsx demo/agent.ts",
+    "demo:firewall": "tsx demo/firewall-demo.ts",
+    "gen:parity": "tsx scripts/gen-parity-cases.ts"
   },
   "dependencies": {
     "dotenv": "^17.4.0",

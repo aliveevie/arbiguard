@@ -8,6 +8,7 @@ import assessRouter from "./routes/assess.js";
 import breakerRouter from "./routes/breaker.js";
 import healthRouter from "./routes/health.js";
 import chatRouter from "./routes/chat.js";
+import firewallRouter from "./routes/firewall.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -53,6 +54,7 @@ app.use("/api/monitor", monitorRouter);
 app.use("/api/assess", assessRouter);
 app.use("/api/breaker", breakerRouter);
 app.use("/api/health", healthRouter);
+app.use("/api/firewall", firewallRouter);
 
 // ── Status endpoint ────────────────────────────────────────────────────
 app.get("/api/status", (_req, res) => {
@@ -64,14 +66,20 @@ app.get("/api/status", (_req, res) => {
     status: "healthy",
     timestamp: Date.now(),
     contracts: {
-      circuitBreaker: "0xE827C2eF74F67e21c637d3164b3af3bC394cA52F",
-      network: "arbitrum_sepolia",
-      chainId: 421614,
+      arbitrumSepolia: {
+        chainId: 421614,
+        firewall: "0xad5230b558b8083f4b313f77c83d2765a78645b6",
+        riskEngineStylus: "0x47f6e2dbb2dd913baef535b7aa744ee16d337e99",
+      },
+      robinhoodChainTestnet: {
+        chainId: 46630,
+        firewall: "0x4ad001282938b6b8cfb8850f69d80c8d9bbbeb75",
+        riskEngineStylus: "0x4177bf2196151a05a51f7928988afd3fe7b6e949",
+      },
     },
     agent: {
-      registryAddress: "0x8004A818BFB912233c491871b3d84c89A494BD9e",
-      agentId: 156,
-      owner: "0x6563F945530132a0BacBFD772b79f127ef3Af339",
+      address: "0xcDBd2FbFc371649D11AaEee0C53b6624Ab3cdD33",
+      agentId: 1,
     },
     openai: {
       configured: isOpenAIConfigured(),
@@ -85,6 +93,7 @@ app.get("/api/status", (_req, res) => {
       { method: "POST", path: "/api/breaker", description: "Trigger circuit breaker" },
       { method: "GET", path: "/api/health/:protocol", description: "Get protocol health report" },
       { method: "GET", path: "/api/status", description: "Server status" },
+      { method: "GET", path: "/api/firewall", description: "Live firewall state on Arbitrum Sepolia + Robinhood Chain" },
     ],
     supportedProtocols: ["gmx_v2", "camelot", "aave_v3"],
     supportedNetworks: ["arbitrum_one", "arbitrum_sepolia"],

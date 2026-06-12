@@ -1,404 +1,137 @@
 # ArbiGuard
 
-AI-powered DeFi threat detection and autonomous circuit-breaker response for Arbitrum.
+**An institutional-grade on-chain firewall for tokenized real-world assets on Arbitrum and Robinhood Chain.**
 
 [Live UI Chat Agent](https://arbiguard-latest.onrender.com/)
 |
 [Repository](https://github.com/aliveevie/arbiguard)
 
-## Overview
+## Why
 
-ArbiGuard is a full-stack security agent that monitors DeFi activity on Arbitrum, scores suspicious transactions against multiple exploit indicators, and can trigger an on-chain circuit breaker when risk crosses a blocking threshold.
+Tokenized equities, treasuries, and funds are moving on-chain — Robinhood Chain alone is built to carry tokenized stocks for millions of retail accounts. Institutions bringing these assets on-chain inherit DeFi's attack surface (flash-loan drains, oracle manipulation, sandwich extraction) without DeFi's appetite for risk: a single exploited market is a regulatory event, not just a bad day.
 
-The project combines:
+ArbiGuard is the firewall layer those venues are missing. It scores every suspicious transaction against known exploit signatures, enforces risk policies that a compliance officer has cryptographically signed, and — when an attack pattern sustains — trips an on-chain circuit breaker autonomously and immunizes every other protected market against the same pattern.
 
-- a TypeScript threat-detection skill
-- an Express API and chat agent
-- a React frontend for interactive chat
-- a Solidity circuit-breaker contract with Chainlink VRF integration
-- replay datasets for historical exploit simulations
+## How it works
 
-## What It Does
+```
+ off-chain agent                          on-chain (Arbitrum / Robinhood Chain)
+┌─────────────────────┐   feature      ┌─────────────────────────────────────┐
+│ detection engine     │   vector      │ RiskEngine (Stylus / Solidity)      │
+│ traces, prices,      ├──────────────►│ deterministic score 0-100           │
+│ events, mempool      │               └──────────────┬──────────────────────┘
+└─────────────────────┘                               │ score
+                                       ┌──────────────▼──────────────────────┐
+   risk officer signs                  │ ArbiGuardFirewall                   │
+   policy off-chain                    │ hysteresis breaker FSM              │
+┌─────────────────────┐   EIP-712     │  NORMAL → ELEVATED → TRIPPED        │
+│ RiskPolicyRegistry   │◄──────────────┤        ↖ COOLDOWN ↙                │
+│ thresholds, limits   ├──────────────►│ thresholds from signed policy       │
+└─────────────────────┘                └───────┬─────────────────┬───────────┘
+                                               │ gate            │ on trip
+                                  ┌────────────▼─────┐  ┌────────▼───────────┐
+                                  │ ReputationRegistry│  │ ThreatSignature    │
+                                  │ (ERC-8004 style)  │  │ Registry           │
+                                  │ only proven agents│  │ write-once intel,  │
+                                  │ can trip breakers │  │ read by all pools  │
+                                  └──────────────────┘  └────────────────────┘
+```
 
-ArbiGuard is designed to help an operator, agent framework, or UI do four things:
+1. **One scoring engine, three implementations, bit-identical.** The detection engine reduces a transaction to a canonical 8-element feature vector (flash-loan selectors, spot/TWAP deviation in fixed-point, sandwich bracketing, call-depth shape, liquidation/oracle correlation). The TypeScript engine (`skill/detection/`), the **Arbitrum Stylus engine in Rust** (`contracts-stylus/`), and the Solidity reference engine (`contracts/src/RiskEngineSolidity.sol`) produce the same score for the same vector — proven by parity tests in all three test suites against three historical Arbitrum exploits (GMX 2022, Camelot 2023, Radiant 2024).
+2. **Signed risk policy, not admin keys.** A pool's risk officer signs an EIP-712 `RiskPolicy` (allow / rate-limit / block thresholds, sustain and cooldown windows, per-block volume caps). Anyone can submit the signed policy; nobody can forge one. Enforcement zones come from the registered policy, never from a privileged caller's judgment.
+3. **Hysteresis breaker — no single-block panic.** Risk reports drive a per-pool FSM: `NORMAL → ELEVATED → TRIPPED → COOLDOWN`. Tripping requires the anomaly to sustain across distinct blocks (policy-defined), so one weird block can never halt an institutional market — but during cooldown the re-trip barrier drops to a single block.
+4. **Reputation-gated agents (ERC-8004 style).** Only agents registered in the identity registry with sufficient accumulated reputation can feed the breaker. A fresh address — or a slashed agent — cannot touch protective controls.
+5. **Shared threat intelligence.** A trip publishes the exploit's signature to a write-once registry. Every other registered pool is immediately shielded from that signature with **no transaction of its own** — the first victim's detection becomes everyone's immunity.
 
-1. Assess a live transaction on Arbitrum.
-2. Replay known exploit patterns offline using curated fixtures.
-3. Monitor a pool continuously and flag suspicious activity.
-4. Execute a defensive action on-chain by pausing or rate-limiting a pool.
+## Deployments
 
-### Threat Indicators
+| Network | Chain ID | Contract | Address |
+| --- | --- | --- | --- |
+| Arbitrum Sepolia | 421614 | RiskEngine (Stylus, Rust/WASM) | [`0x47f6e2dbb2dd913baef535b7aa744ee16d337e99`](https://sepolia.arbiscan.io/address/0x47f6e2dbb2dd913baef535b7aa744ee16d337e99) |
+| Arbitrum Sepolia | 421614 | ArbiGuardFirewall | [`0xad5230b558b8083f4b313f77c83d2765a78645b6`](https://arbitrum-sepolia.blockscout.com/address/0xad5230b558b8083f4b313f77c83d2765a78645b6) |
+| Arbitrum Sepolia | 421614 | RiskPolicyRegistry | [`0x9171968d47e382a7387082512156502988b4b414`](https://arbitrum-sepolia.blockscout.com/address/0x9171968d47e382a7387082512156502988b4b414) |
+| Arbitrum Sepolia | 421614 | ReputationRegistry | [`0x62b5bd6bce8c8df71b02432a3ad486a35719274d`](https://arbitrum-sepolia.blockscout.com/address/0x62b5bd6bce8c8df71b02432a3ad486a35719274d) |
+| Arbitrum Sepolia | 421614 | ThreatSignatureRegistry | [`0x1b0216bc1c5e57db9b2721ddacda107759b745aa`](https://arbitrum-sepolia.blockscout.com/address/0x1b0216bc1c5e57db9b2721ddacda107759b745aa) |
+| Arbitrum Sepolia | 421614 | RiskEngineSolidity (reference) | [`0x574388991f8a3e32f98789433541d5e3a6b39c21`](https://arbitrum-sepolia.blockscout.com/address/0x574388991f8a3e32f98789433541d5e3a6b39c21) |
+| Robinhood Chain Testnet | 46630 | RiskEngine (Stylus, Rust/WASM) | [`0x4177bf2196151a05a51f7928988afd3fe7b6e949`](https://explorer.testnet.chain.robinhood.com/address/0x4177bf2196151a05a51f7928988afd3fe7b6e949) |
+| Robinhood Chain Testnet | 46630 | ArbiGuardFirewall | [`0x4ad001282938b6b8cfb8850f69d80c8d9bbbeb75`](https://explorer.testnet.chain.robinhood.com/address/0x4ad001282938b6b8cfb8850f69d80c8d9bbbeb75) |
+| Robinhood Chain Testnet | 46630 | RiskPolicyRegistry | [`0xee702c8f5b1c13492f9ada978e9649fcf4771f75`](https://explorer.testnet.chain.robinhood.com/address/0xee702c8f5b1c13492f9ada978e9649fcf4771f75) |
+| Robinhood Chain Testnet | 46630 | ReputationRegistry | [`0x0b12480cb5db1f6605fe4ed206a0f6c29f86f85e`](https://explorer.testnet.chain.robinhood.com/address/0x0b12480cb5db1f6605fe4ed206a0f6c29f86f85e) |
+| Robinhood Chain Testnet | 46630 | ThreatSignatureRegistry | [`0x07f821d0938ac1eb5b533d1ee735eddfabf36110`](https://explorer.testnet.chain.robinhood.com/address/0x07f821d0938ac1eb5b533d1ee735eddfabf36110) |
+| Robinhood Chain Testnet | 46630 | RiskEngineSolidity (reference) | [`0x46e841b73c67d7e90bc629c3d4922c10661f8d6a`](https://explorer.testnet.chain.robinhood.com/address/0x46e841b73c67d7e90bc629c3d4922c10661f8d6a) |
 
-The detection engine scores each transaction using five weighted signals:
+Solidity contracts are source-verified on both Blockscout explorers. The Stylus engines are activated WASM contracts (Rust, `contracts-stylus/`) whose on-chain `score()` reproduces the off-chain scorer exactly — 73 / 63 / 30 on the three replays, on both chains. The full exploit-replay demo (`pnpm demo:firewall`) has tripped the breaker live on each network.
 
-| Indicator | Weight | Purpose |
+Live agent UI: **https://arbiguard-latest.onrender.com/** · **Live firewall dashboard: https://arbiguard-latest.onrender.com/firewall** (reads breaker state, scorer parity, and the threat registry from both chains every 15s) · Status: https://arbiguard-latest.onrender.com/api/status
+
+## Threat model
+
+The engine scores five weighted indicators; the zones are enforced on-chain from the signed policy:
+
+| Indicator | Weight | Detects |
 | --- | ---: | --- |
-| Flash loan initiation | 30 | Detects flash-loan or flash-swap call signatures in traces and logs |
-| Price deviation | 25 | Flags large spot-vs-TWAP style deviations from execution heuristics |
-| Sandwich attack | 20 | Detects same-sender front-run / back-run patterns around a victim tx |
-| Reentrancy depth | 15 | Detects repeated targets at suspicious call depth |
-| Liquidation correlation | 10 | Flags liquidation activity aligned with oracle updates |
+| Flash loan initiation | 30 | flash-loan / flash-swap selectors in the call trace |
+| Price deviation | 25 | spot vs TWAP deviation beyond 3σ (fixed-point, on-chain) |
+| Sandwich attack | 20 | same-sender front-run / back-run bracketing a victim |
+| Reentrancy depth | 15 | repeated targets at suspicious call depth |
+| Liquidation correlation | 10 | liquidations landing in the same block as oracle updates |
 
-### Recommendations
-
-| Score | Result |
+| Score | Zone |
 | --- | --- |
-| `0-30` | `allow` |
-| `31-60` | `flag` |
-| `61-100` | `block` |
+| 0–30 | allow |
+| 31–60 | rate-limit (per-block volume cap from policy) |
+| 61–100 | block (feeds the breaker FSM) |
 
-## Live Links
+## Repository layout
 
-- Live UI chat agent: https://arbiguard-latest.onrender.com/
-- Live status endpoint: https://arbiguard-latest.onrender.com/api/status
-- GitHub repository: https://github.com/aliveevie/arbiguard
-
-## 3D Architecture View
-
-```text
-                  ________________________________
-                 /                               /|
-                /   React Chat UI               / |
-               /   arbiguard-ui                 /  |
-              /_______________________________ /   |
-              |  quick actions, markdown chat |    |
-              |  API proxy to Express         |    |
-              |_______________________________|    |
-              |                               |    |
-              |   Express API + Agent Router  |   /
-              |   server/                     |  /
-              |_______________________________| /
-              |  /api/chat                    |/
-              |  /api/assess
-              |  /api/monitor
-              |  /api/breaker
-              |  /api/health
-              |________________________________
-                           |
-                           v
-                  ________________________________
-                 /                               /|
-                /   Skill + Detection Engine    / |
-               /   skill/                       /  |
-              /_______________________________ /   |
-              | replay mode                    |    |
-              | live tx analysis               |    |
-              | scoring + recommendations      |    |
-              |________________________________|   /
-                           |                     |  /
-                           |                     | /
-                           v                     |/
-        ____________________________________    ______________________________
-       /                                   /|  /                             /|
-      /  Arbitrum RPC / Event Data        / | /  ArbiGuardCircuitBreaker    / |
-     /___________________________________/  |/  contracts/                  /  |
-     | blocks, receipts, traces, logs    |  /______________________________/   |
-     |___________________________________| /  pause, rate limit, threat log |  |
-                                          |/  Chainlink VRF defender flow    | /
-                                          /__________________________________|/
 ```
-
-## Main Components
-
-### 1. Skill Layer
-
-The reusable skill lives in [`skill/`](./skill) and exposes these actions:
-
-- `assessThreat`
-- `monitorPool`
-- `triggerCircuitBreaker`
-- `getProtocolHealth`
-- `registerAgent`
-
-The skill can operate in:
-
-- live mode, using RPC data from Arbitrum
-- replay mode, using bundled exploit fixtures
-
-### 2. API and Chat Agent
-
-The Express server in [`server/`](./server) exposes REST endpoints and a chat-driven interface.
-
-The agent supports intent-style requests such as:
-
-- replaying historical exploits
-- checking protocol health
-- showing circuit-breaker status
-- monitoring a pool
-- showing threat history
-- assessing a specific transaction hash
-
-OpenAI is optional. If `OPENAI_API_KEY` is set, the chat route can resolve broader free-form prompts. Without it, the deterministic intent parser still supports the main command flows.
-
-### 3. Frontend
-
-The React app in [`arbiguard-ui/`](./arbiguard-ui) is a chat UI for interacting with the agent. It includes:
-
-- a conversation layout
-- quick command chips
-- markdown-safe responses
-- Vite proxying to the local API during development
-
-The production bundle is emitted into [`public/`](./public), which the Express server serves directly.
-
-### 4. Smart Contracts
-
-The Solidity package in [`contracts/`](./contracts) contains:
-
-- `ArbiGuardCircuitBreaker.sol`
-- Foundry tests
-- a deployment script
-- vendored `forge-std`, OpenZeppelin, and Chainlink dependencies
-
-The circuit breaker supports:
-
-- pool registration
-- guardian-controlled pause / unpause
-- pool rate limiting
-- threat history tracking
-- VRF-based defender selection and settlement
-
-## Historical Replay Dataset
-
-ArbiGuard ships with replay fixtures in [`skill/detection/replays/`](./skill/detection/replays):
-
-| Replay ID | Scenario |
-| --- | --- |
-| `gmx_oracle_manipulation_2022` | GMX oracle manipulation replay |
-| `camelot_flash_drain_2023` | Camelot flash-loan drain replay |
-| `radiant_flashloan_2024` | Radiant flash-loan exploit replay |
-
-These are used by the CLI demo, tests, and chat agent.
-
-## Tech Stack
-
-- TypeScript
-- Node.js
-- Express
-- OpenAI SDK
-- Viem
-- Zod
-- React
-- Vite
-- Tailwind CSS
-- Vitest
-- Solidity
-- Foundry
-- Chainlink VRF
-
-## Project Structure
-
-```text
 arbiguard/
-├── arbiguard-ui/        # React chat frontend
-├── contracts/           # Solidity contracts, tests, deploy script
-├── demo/                # End-to-end demo script
-├── public/              # Built frontend served by Express
-├── server/              # API server, chat agent, env loading, LLM routing
-├── skill/               # Threat detection engine and actions
-├── test/                # Vitest suites for skill and live integrations
-├── Dockerfile
-├── render.yaml
-└── README.md
+├── contracts-stylus/    # Rust RiskEngine for Arbitrum Stylus (cargo stylus)
+├── contracts/           # Foundry: firewall, registries, reference engine, tests
+│   ├── src/ArbiGuardFirewall.sol        # hysteresis breaker FSM
+│   ├── src/RiskPolicyRegistry.sol       # EIP-712 signed risk policies
+│   ├── src/ReputationRegistry.sol       # ERC-8004-style agent gating
+│   ├── src/ThreatSignatureRegistry.sol  # write-once shared threat intel
+│   └── src/RiskEngineSolidity.sol       # reference scorer (non-Stylus chains)
+├── skill/               # TypeScript detection engine, feature extraction, replays
+├── server/ + arbiguard-ui/  # Express API + React chat agent (live URL above)
+├── demo/firewall-demo.ts    # end-to-end exploit-replay demo
+├── deployments/         # per-chain deployed addresses (JSON)
+└── scripts/             # parity codegen, testnet deployment
 ```
 
-## Getting Started
-
-### Prerequisites
-
-- Node.js 20+
-- pnpm
-- Foundry (`forge`, `cast`)
-
-### 1. Install Dependencies
+## Run it
 
 ```bash
 pnpm install
-cd contracts && forge install && cd ..
+
+# all three scorers agree on the historical replays
+pnpm test                                  # TS engine + parity + live integration
+(cd contracts && forge test -vvv)          # firewall, policies, gating, registry, parity
+(cd contracts-stylus && cargo test)        # Stylus engine parity
+(cd contracts-stylus && cargo stylus check)
+
+# deploy both testnets (needs funded DEPLOYER_PRIVATE_KEY in .env)
+./scripts/deploy-testnets.sh
+
+# replay the Radiant exploit against the deployed stack
+RPC_URL=https://sepolia-rollup.arbitrum.io/rpc CHAIN_ID=421614 pnpm demo:firewall
 ```
 
-### 2. Configure Environment
+The demo replays the 2024 Radiant flash-loan exploit, scores it **on-chain** (73 → crosses the signed block threshold of 61), has the reputation-gated agent trip the breaker across two blocks, publishes the threat signature, and shows a second pool rejecting the same signature without ever being touched.
 
-Create a local env file from the example:
+## Historical replays
 
-```bash
-cp .env.example .env
-```
+| Replay | Date | Engine score | Outcome |
+| --- | --- | ---: | --- |
+| GMX oracle manipulation | 2022-09 | 63 | block |
+| Camelot flash drain | 2023-03 | 30 | allow → flagged indicators |
+| Radiant flash-loan exploit | 2024-01 | 73 | block → breaker trips |
 
-Core variables used by the app:
+## Stack
 
-```bash
-ARBITRUM_ONE_RPC_URL=
-ARBITRUM_SEPOLIA_RPC_URL=
-OPENAI_API_KEY=
-OPENAI_MODEL=gpt-4o-mini
-PORT=3000
-```
-
-Additional variables used for on-chain writes and contract deployment:
-
-```bash
-AGENT_PRIVATE_KEY=
-DEPLOYER_PRIVATE_KEY=
-CHAINLINK_VRF_SUBSCRIPTION_ID=
-CHAINLINK_VRF_KEY_HASH=
-```
-
-### 3. Run the API Server
-
-```bash
-pnpm dev
-```
-
-This starts the Express app on `http://localhost:3000`.
-
-### 4. Run the Frontend in Development
-
-In a second terminal:
-
-```bash
-pnpm --dir arbiguard-ui install
-pnpm --dir arbiguard-ui dev
-```
-
-The frontend runs on `http://localhost:8080` and proxies API calls to the local Express server.
-
-### 5. Build for Production
-
-```bash
-pnpm build
-pnpm start
-```
-
-This builds:
-
-- the React app into `public/`
-- the TypeScript server into `dist/`
-
-## Available Scripts
-
-### Root
-
-```bash
-pnpm dev
-pnpm build
-pnpm start
-pnpm test
-pnpm skill:register
-pnpm demo
-```
-
-### Frontend
-
-```bash
-pnpm --dir arbiguard-ui dev
-pnpm --dir arbiguard-ui build
-pnpm --dir arbiguard-ui test
-```
-
-### Contracts
-
-```bash
-cd contracts
-forge test -vvv
-forge script script/Deploy.s.sol --rpc-url $ARBITRUM_SEPOLIA_RPC_URL --private-key $DEPLOYER_PRIVATE_KEY --broadcast
-```
-
-## REST API
-
-| Method | Endpoint | Description |
-| --- | --- | --- |
-| `POST` | `/api/chat` | Chat with the ArbiGuard agent |
-| `POST` | `/api/assess` | Score a transaction threat |
-| `POST` | `/api/monitor` | Start monitoring a pool |
-| `DELETE` | `/api/monitor/:sessionId` | Stop a monitoring session |
-| `POST` | `/api/breaker` | Pause or rate-limit a pool |
-| `GET` | `/api/health/:protocol` | Protocol health report |
-| `GET` | `/api/status` | Service and deployment status |
-
-### Example: Threat Assessment
-
-```bash
-curl -X POST http://localhost:3000/api/assess \
-  -H "Content-Type: application/json" \
-  -d '{
-    "txHash": "0x0000000000000000000000000000000000000000000000000000000000000001",
-    "network": "arbitrum_one",
-    "replayMode": true,
-    "replayId": "radiant_flashloan_2024"
-  }'
-```
-
-### Example: Chat Agent
-
-```bash
-curl -X POST http://localhost:3000/api/chat \
-  -H "Content-Type: application/json" \
-  -d '{
-    "message": "replay the radiant exploit"
-  }'
-```
-
-## Example Chat Prompts
-
-- `replay the radiant exploit`
-- `show me all exploits`
-- `check gmx health`
-- `show circuit breaker status`
-- `show threat history`
-- `assess 0x...`
-- `monitor pool 0x...`
-- `stop monitoring`
-- `who are you?`
-
-## Testing
-
-The repository includes:
-
-- Vitest coverage for the detection engine and skill actions
-- live-read integration tests against Arbitrum Sepolia
-- Foundry tests for the circuit-breaker contract
-
-Run the TypeScript suite:
-
-```bash
-pnpm test
-```
-
-Run the Solidity suite:
-
-```bash
-cd contracts && forge test -vvv
-```
-
-## Deployment
-
-### Docker
-
-```bash
-docker build -t arbiguard .
-docker run -p 3000:3000 --env-file .env arbiguard
-```
-
-### Render
-
-This repository includes [`render.yaml`](./render.yaml) for deployment on Render.
-
-### Live Deployment
-
-- UI: https://arbiguard-latest.onrender.com/
-- API status: https://arbiguard-latest.onrender.com/api/status
-
-## Why This Repo Is Useful
-
-ArbiGuard is not just a contract repo and not just a frontend demo. It is a full reference implementation for:
-
-- agentic transaction analysis
-- DeFi exploit replay simulation
-- AI-assisted security operations
-- chat-based operational tooling
-- smart-contract-backed defensive automation
+TypeScript · Viem · Express · React · Rust / Arbitrum Stylus · Solidity 0.8.28 · Foundry · OpenZeppelin · Vitest
 
 ## License
 
-MIT
+MIT — IBX Lab

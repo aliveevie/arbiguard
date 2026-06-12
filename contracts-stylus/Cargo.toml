@@ -1,0 +1,25 @@
+[package]
+name = "arbiguard-risk-engine"
+version = "0.1.0"
+edition = "2021"
+description = "ArbiGuard on-chain risk scoring engine for Arbitrum Stylus"
+license = "MIT"
+
+[dependencies]
+stylus-sdk = "0.10.7"
+
+[dev-dependencies]
+stylus-sdk = { version = "0.10.7", features = ["stylus-test"] }
+
+[features]
+export-abi = ["stylus-sdk/export-abi"]
+
+[lib]
+crate-type = ["lib", "cdylib"]
+
+[profile.release]
+codegen-units = 1
+strip = true
+lto = true
+panic = "abort"
+opt-level = "s"

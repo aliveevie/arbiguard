@@ -1,4 +1,8 @@
-FROM node:20-slim AS builder
+# Official node image; override with a registry mirror when Docker Hub is slow,
+# e.g. --build-arg BASE_IMAGE=public.ecr.aws/docker/library/node:22-slim
+ARG BASE_IMAGE=node:22-slim
+
+FROM ${BASE_IMAGE} AS builder
 
 WORKDIR /app
 
@@ -18,7 +22,7 @@ RUN pnpm build
 WORKDIR /app
 RUN pnpm run build:server
 
-FROM node:20-slim
+FROM ${BASE_IMAGE}
 
 WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
@@ -28,6 +32,8 @@ COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/public ./public
 COPY skill/detection/replays/*.json ./skill/detection/replays/
 COPY skill/contracts/abi/ ./skill/contracts/abi/
+# deployed contract addresses read by /api/firewall (live dashboard)
+COPY deployments/ ./deployments/
 
 ENV PORT=3000
 EXPOSE 3000
