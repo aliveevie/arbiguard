@@ -1,4 +1,8 @@
-FROM node:22-slim AS builder
+# Official node image; override with a registry mirror when Docker Hub is slow,
+# e.g. --build-arg BASE_IMAGE=public.ecr.aws/docker/library/node:22-slim
+ARG BASE_IMAGE=node:22-slim
+
+FROM ${BASE_IMAGE} AS builder
 
 WORKDIR /app
 
@@ -18,7 +22,7 @@ RUN pnpm build
 WORKDIR /app
 RUN pnpm run build:server
 
-FROM node:22-slim
+FROM ${BASE_IMAGE}
 
 WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
